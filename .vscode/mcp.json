@@ -1,0 +1,13 @@
+{
+  "mcp": {
+    "servers": {
+      "python-tools": {
+        "command": "python",
+        "args": ["-m", "mcp_server_python"],
+        "env": {
+          "PYTHON_PATH": "${workspaceFolder}"
+        }
+      }
+    }
+  }
+}

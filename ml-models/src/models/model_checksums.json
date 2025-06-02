@@ -1,0 +1,18 @@
+{
+    "checksums": {
+        "baseline_model": {
+            "algorithm": "sha256",
+            "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "progression_model": {
+            "algorithm": "sha256", 
+            "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "risk_predictor": {
+            "algorithm": "sha256",
+            "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+    },
+    "last_updated": "2025-06-01T00:00:00Z",
+    "version": "1.0.0"
+}

@@ -1,0 +1,21 @@
+patient_id,timestamp,test_type,location,stimulus_intensity,response_time_ms,patient_response,detection_threshold,baseline_temp,environmental_temp,humidity,device_id
+P001,2024-01-15 08:30:15,pinprick,heel_left,2.5,450,felt,2.5,32.1,22.3,45,SHOE_001
+P001,2024-01-15 08:30:45,pinprick,big_toe_left,3.0,520,felt,3.0,31.8,22.3,45,SHOE_001
+P001,2024-01-15 08:31:15,temperature_hot,heel_left,45.2,380,hot,3.1,32.1,22.3,45,SHOE_001
+P001,2024-01-15 08:31:45,temperature_cold,heel_left,18.5,420,cold,13.6,32.1,22.3,45,SHOE_001
+P001,2024-01-15 08:32:15,vibration,heel_left,15.5,350,felt,15.5,32.1,22.3,45,SHOE_001
+P002,2024-01-15 09:15:22,pinprick,heel_left,4.2,890,not_felt,4.2,31.9,23.1,42,SHOE_002
+P002,2024-01-15 09:15:52,pinprick,big_toe_left,5.1,1200,felt,5.1,31.7,23.1,42,SHOE_002
+P002,2024-01-15 09:16:22,temperature_hot,heel_left,48.3,950,hot,6.2,31.9,23.1,42,SHOE_002
+P002,2024-01-15 09:16:52,temperature_cold,heel_left,15.2,1100,not_felt,17.0,31.9,23.1,42,SHOE_002
+P002,2024-01-15 09:17:22,vibration,heel_left,22.8,850,felt,22.8,31.9,23.1,42,SHOE_002
+P003,2024-01-15 19:45:10,pinprick,arch_right,1.8,280,felt,1.8,32.3,21.8,48,SHOE_003
+P003,2024-01-15 19:45:40,pinprick,heel_right,2.1,310,felt,2.1,32.0,21.8,48,SHOE_003
+P003,2024-01-15 19:46:10,temperature_hot,arch_right,43.8,250,hot,2.5,32.3,21.8,48,SHOE_003
+P003,2024-01-15 19:46:40,temperature_cold,arch_right,19.1,290,cold,12.2,32.3,21.8,48,SHOE_003
+P003,2024-01-15 19:47:10,vibration,arch_right,12.3,220,felt,12.3,32.3,21.8,48,SHOE_003
+P004,2024-01-16 07:22:33,pinprick,big_toe_right,6.8,1850,not_felt,6.8,31.5,22.9,44,SHOE_004
+P004,2024-01-16 07:23:03,pinprick,heel_right,7.2,2100,not_felt,7.2,31.2,22.9,44,SHOE_004
+P004,2024-01-16 07:23:33,temperature_hot,big_toe_right,52.1,1950,hot,10.8,31.5,22.9,44,SHOE_004
+P004,2024-01-16 07:24:03,temperature_cold,big_toe_right,12.3,2200,not_felt,19.2,31.5,22.9,44,SHOE_004
+P004,2024-01-16 07:24:33,vibration,big_toe_right,35.6,1750,felt,35.6,31.5,22.9,44,SHOE_004

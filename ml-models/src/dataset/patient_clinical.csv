@@ -1,0 +1,11 @@
+patient_id,age,gender,diabetes_type,years_since_diagnosis,latest_hba1c,bmi,existing_neuropathy,neuropathy_severity,medications,comorbidities,monofilament_test_score,tuning_fork_score,ankle_reflex_status,foot_exam_score,enrollment_date
+P001,45,M,Type2,8,7.2,28.5,No,0,Metformin;Lisinopril,Hypertension,10,Normal,Present,0,2024-01-15
+P002,62,F,Type2,15,8.9,32.1,Yes,Mild,Insulin;Metformin;Gabapentin,Hypertension;Kidney_disease,6,Reduced,Absent,2,2024-01-15
+P003,38,M,Type1,12,6.8,24.2,No,0,Insulin_pump,None,10,Normal,Present,0,2024-01-15
+P004,71,F,Type2,22,9.4,29.8,Yes,Severe,Insulin;Pregabalin;Lisinopril,Hypertension;Retinopathy,2,Absent,Absent,5,2024-01-16
+P005,55,M,Type2,5,7.8,31.2,Suspected,Mild,Metformin;Glipizide,Hypertension,8,Reduced,Present,1,2024-01-16
+P006,49,F,Type1,18,7.1,26.7,Yes,Moderate,Insulin_MDI;Duloxetine,None,4,Reduced,Reduced,3,2024-01-17
+P007,58,M,Type2,11,8.2,33.5,No,0,Metformin;Januvia,Hypertension;High_cholesterol,9,Normal,Present,0,2024-01-17
+P008,43,F,Pre-diabetic,0,6.2,27.9,No,0,Lifestyle_only,None,10,Normal,Present,0,2024-01-18
+P009,67,M,Type2,19,8.7,28.1,Yes,Moderate,Insulin;Metformin;Lyrica,Hypertension;CAD,5,Reduced,Absent,4,2024-01-18
+P010,52,F,Type2,9,7.6,30.4,Suspected,Mild,Metformin;Ozempic,None,7,Normal,Present,1,2024-01-19

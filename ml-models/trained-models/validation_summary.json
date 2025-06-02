@@ -1,0 +1,15 @@
+{
+    "baseline_models": {
+        "total_patients": 15,
+        "successful_validations": 15,
+        "average_mae": 0.0
+    },
+    "progression_models": {
+        "total_patients": 15,
+        "successful_validations": 0,
+        "average_mae": NaN
+    },
+    "risk_prediction": {
+        "error": "Empty training or test data"
+    }
+}
