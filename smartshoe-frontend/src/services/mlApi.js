@@ -1,11 +1,14 @@
 import axios from 'axios'
+import { API_CONFIG, ENV } from '../config/environment'
 
 // Create a completely isolated axios instance for ML API calls (no auth)
 const mlApi = axios.create({
-  baseURL: 'http://localhost:8080/api/ml',
-  timeout: 30000,
+  baseURL: API_CONFIG.ML_API_URL,
+  timeout: API_CONFIG.TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
+    'X-App-Version': import.meta.env.VITE_APP_VERSION || '1.0.0',
+    'X-App-Environment': ENV.NODE_ENV,
   },
 })
 

@@ -1,12 +1,15 @@
 import axios from 'axios'
 import toast from 'react-hot-toast'
+import { API_CONFIG, COMPLIANCE_CONFIG, DEV_CONFIG, ENV } from '../config/environment'
 
-// Create axios instance
+// Create axios instance with environment-based configuration
 const api = axios.create({
-  baseURL: 'http://localhost:8080',
-  timeout: 10000,
+  baseURL: API_CONFIG.BASE_URL,
+  timeout: API_CONFIG.TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
+    'X-App-Version': import.meta.env.VITE_APP_VERSION || '1.0.0',
+    'X-App-Environment': ENV.NODE_ENV,
   },
 })
 
