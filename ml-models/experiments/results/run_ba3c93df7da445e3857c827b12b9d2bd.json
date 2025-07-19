@@ -1,0 +1,13 @@
+{
+    "run_id": "ba3c93df7da445e3857c827b12b9d2bd",
+    "train_accuracy": 0.9625,
+    "test_accuracy": 0.1,
+    "params": {
+        "data_path": "raw/sensor_data.csv",
+        "test_size": 0.2,
+        "random_state": 42,
+        "n_estimators": 100,
+        "max_depth": 10,
+        "min_samples_split": 5
+    }
+}

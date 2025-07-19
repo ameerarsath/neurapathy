@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1749214804360
+current_stage: None
+description: null
+last_updated_timestamp: 1749214804360
+name: smart_shoe_model
+run_id: ba3c93df7da445e3857c827b12b9d2bd
+run_link: null
+source: file:D:\biotech\project\ml-models\experiments\mlruns/347177662755029430/ba3c93df7da445e3857c827b12b9d2bd/artifacts/model
+status: READY
+status_message: null
+storage_location: file:D:\biotech\project\ml-models\experiments\mlruns/347177662755029430/ba3c93df7da445e3857c827b12b9d2bd/artifacts/model
+user_id: null
+version: 1

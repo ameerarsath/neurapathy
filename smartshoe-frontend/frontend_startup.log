@@ -1,0 +1,10 @@
+
+> smartshoe-frontend@1.0.0 dev
+> vite --host
+
+
+  VITE v5.4.19  ready in 3438 ms
+
+  ➜  Local:   http://localhost:3000/
+  ➜  Network: http://10.255.255.254:3000/
+  ➜  Network: http://172.25.151.123:3000/

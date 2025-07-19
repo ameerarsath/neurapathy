@@ -1,0 +1,51 @@
+{
+  "name": "smartshoe-frontend",
+  "version": "1.0.0",
+  "description": "Smart Shoe Diabetic Monitoring - Frontend Interface",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext js,jsx --report-unused-disable-directives --max-warnings 0",
+    "test-login": "echo 'Open test-login.html in your browser to test login styling'"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.2",
+    "@capacitor/camera": "^7.0.1",
+    "@capacitor/cli": "^6.2.1",
+    "@capacitor/core": "^7.4.2",
+    "@capacitor/device": "^7.0.1",
+    "@capacitor/haptics": "^7.0.1",
+    "@capacitor/local-notifications": "^7.0.1",
+    "@capacitor/network": "^7.0.1",
+    "@capacitor/preferences": "^7.0.1",
+    "@capacitor/push-notifications": "^7.0.1",
+    "@tanstack/react-query": "^4.40.1",
+    "axios": "^1.6.2",
+    "clsx": "^2.0.0",
+    "date-fns": "^3.0.6",
+    "framer-motion": "^10.18.0",
+    "lucide-react": "^0.460.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-hook-form": "^7.48.2",
+    "react-hot-toast": "^2.4.1",
+    "react-router-dom": "^6.21.1",
+    "recharts": "^2.8.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.55.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5.8.3",
+    "vite": "^5.4.2"
+  }
+}

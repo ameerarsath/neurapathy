@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Connection Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-100 flex items-center justify-center">
+    <div class="max-w-2xl w-full bg-white rounded-lg shadow-lg p-8">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Smart Shoe Backend Test</h1>
+        
+        <div class="space-y-4">
+            <button onclick="testHealth()" 
+                    class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                Test Backend Health (Public)
+            </button>
+            
+            <button onclick="testAuth()" 
+                    class="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                Test Authentication (Secured)
+            </button>
+            
+            <button onclick="testEndpoints()" 
+                    class="w-full px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600">
+                Test All Endpoints
+            </button>
+        </div>
+        
+        <div id="results" class="mt-6 p-4 bg-gray-50 rounded-lg min-h-[200px]">
+            <p class="text-gray-600">Click a button above to test backend connection...</p>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const colorClass = type === 'success' ? 'text-green-600' : 
+                              type === 'error' ? 'text-red-600' : 
+                              type === 'warning' ? 'text-yellow-600' : 'text-gray-600';
+            
+            results.innerHTML += `<div class="${colorClass}">[${timestamp}] ${message}</div>`;
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testHealth() {
+            clearResults();
+            log('Testing backend health endpoint...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✅ Backend is running!', 'success');
+                    log(`Status: ${data.status}`, 'success');
+                    log(`Message: ${data.message}`, 'success');
+                    log(`Timestamp: ${data.timestamp}`, 'info');
+                } else {
+                    log(`❌ Backend returned error: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                log(`❌ Connection failed: ${error.message}`, 'error');
+                log('Make sure backend is running on port 8080', 'warning');
+            }
+        }
+
+        async function testAuth() {
+            clearResults();
+            log('Testing authentication...', 'info');
+            
+            const credentials = [
+                { username: 'admin', password: 'admin123' },
+                { username: 'doctor', password: 'doctor123' },
+                { username: 'patient', password: 'patient123' },
+                { username: 'demo', password: 'demo' }
+            ];
+
+            for (const cred of credentials) {
+                try {
+                    const token = btoa(`${cred.username}:${cred.password}`);
+                    const response = await fetch('http://localhost:8080/api/patients', {
+                        headers: {
+                            'Authorization': `Basic ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    if (response.ok) {
+                        log(`✅ ${cred.username} authentication successful`, 'success');
+                    } else if (response.status === 401) {
+                        log(`❌ ${cred.username} invalid credentials`, 'error');
+                    } else {
+                        log(`⚠️ ${cred.username} unexpected response: ${response.status}`, 'warning');
+                    }
+                } catch (error) {
+                    log(`❌ ${cred.username} connection error: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function testEndpoints() {
+            clearResults();
+            log('Testing all endpoints...', 'info');
+            
+            const endpoints = [
+                { url: '/api/health', auth: false, name: 'Health Check' },
+                { url: '/api/status', auth: false, name: 'Status' },
+                { url: '/api/test', auth: false, name: 'Test' },
+                { url: '/api/credentials', auth: false, name: 'Credentials' },
+                { url: '/api/patients', auth: true, name: 'Patients (Secured)' },
+                { url: '/api/devices', auth: true, name: 'Devices (Secured)' },
+                { url: '/api/medical-readings', auth: true, name: 'Medical Readings (Secured)' }
+            ];
+
+            const token = btoa('admin:admin123');
+
+            for (const endpoint of endpoints) {
+                try {
+                    const headers = {
+                        'Content-Type': 'application/json'
+                    };
+                    
+                    if (endpoint.auth) {
+                        headers['Authorization'] = `Basic ${token}`;
+                    }
+
+                    const response = await fetch(`http://localhost:8080${endpoint.url}`, { headers });
+                    
+                    if (response.ok) {
+                        log(`✅ ${endpoint.name}: Working`, 'success');
+                    } else {
+                        log(`❌ ${endpoint.name}: Error ${response.status}`, 'error');
+                    }
+                } catch (error) {
+                    log(`❌ ${endpoint.name}: Connection failed`, 'error');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

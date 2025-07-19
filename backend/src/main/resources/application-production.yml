@@ -1,0 +1,345 @@
+# ====================================================================
+# PRODUCTION CONFIGURATION FOR SMART SHOE API
+# Optimized for production deployment with security and monitoring
+# ====================================================================
+
+# ====================================================================
+# SERVER CONFIGURATION
+# ====================================================================
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/javascript,application/json
+    min-response-size: 1024
+  http2:
+    enabled: true
+  error:
+    whitelabel:
+      enabled: false
+    include-stacktrace: never
+    include-message: never
+
+# ====================================================================
+# SPRING BOOT CONFIGURATION
+# ====================================================================
+spring:
+  application:
+    name: smartshoe-api-production
+  
+  profiles:
+    active: production
+  
+  # ================================================================
+  # DATABASE CONFIGURATION (PostgreSQL)
+  # ================================================================
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/smartshoe_prod}
+    username: ${SPRING_DATASOURCE_USERNAME:smartshoe_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:SmartShoe2024!}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+      connection-test-query: SELECT 1
+  
+  # ================================================================
+  # JPA/HIBERNATE CONFIGURATION
+  # ================================================================
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+        use_sql_comments: false
+        jdbc:
+          batch_size: 25
+          order_inserts: true
+          order_updates: true
+        cache:
+          use_second_level_cache: true
+          use_query_cache: true
+          region:
+            factory_class: org.hibernate.cache.jcache.JCacheRegionFactory
+        connection:
+          provider_disables_autocommit: true
+        query:
+          plan_cache_max_size: 2048
+          plan_parameter_metadata_max_size: 128
+  
+  # ================================================================
+  # REDIS CONFIGURATION
+  # ================================================================
+  redis:
+    host: ${SPRING_REDIS_HOST:localhost}
+    port: ${SPRING_REDIS_PORT:6379}
+    password: ${SPRING_REDIS_PASSWORD:RedisSmartShoe2024!}
+    timeout: 5000ms
+    jedis:
+      pool:
+        max-active: 20
+        max-idle: 10
+        min-idle: 5
+        max-wait: 3000ms
+  
+  # ================================================================
+  # CACHE CONFIGURATION
+  # ================================================================
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000
+      cache-null-values: false
+    cache-names:
+      - patients
+      - devices
+      - test-results
+      - medical-data
+      - user-sessions
+  
+  # ================================================================
+  # JACKSON JSON CONFIGURATION
+  # ================================================================
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      fail-on-empty-beans: false
+    deserialization:
+      fail-on-unknown-properties: false
+      accept-single-value-as-array: true
+    default-property-inclusion: NON_NULL
+    time-zone: UTC
+    date-format: yyyy-MM-dd'T'HH:mm:ss.SSSZ
+
+# ====================================================================
+# ACTUATOR/MONITORING CONFIGURATION
+# ====================================================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: when_authorized
+      show-components: when_authorized
+      cache:
+        time-to-live: 10s
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  health:
+    db:
+      enabled: true
+    redis:
+      enabled: true
+    diskspace:
+      enabled: true
+      threshold: 100MB
+  info:
+    env:
+      enabled: true
+    java:
+      enabled: true
+    os:
+      enabled: true
+    build:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+        step: 60s
+        descriptions: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.requests: 0.5, 0.95, 0.99
+    tags:
+      application: smartshoe-api
+      environment: production
+
+# ====================================================================
+# LOGGING CONFIGURATION
+# ====================================================================
+logging:
+  level:
+    root: INFO
+    com.smartshoe.api: DEBUG
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN
+    org.springframework.web: WARN
+    org.apache.tomcat: WARN
+  pattern:
+    console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: ${LOGGING_FILE_NAME:/app/logs/smartshoe-api.log}
+    max-size: 100MB
+    max-history: 30
+    total-size-cap: 3GB
+  logback:
+    rollingpolicy:
+      file-name-pattern: ${LOGGING_FILE_NAME:/app/logs/smartshoe-api.log}.%d{yyyy-MM-dd}.%i.gz
+      max-file-size: 100MB
+      max-history: 30
+      total-size-cap: 3GB
+
+# ====================================================================
+# APPLICATION-SPECIFIC CONFIGURATION
+# ====================================================================
+app:
+  name: Smart Shoe API
+  version: 3.0.0
+  description: Production-Ready Diabetic Neuropathy Monitoring Platform
+  
+  # ================================================================
+  # SECURITY CONFIGURATION
+  # ================================================================
+  security:
+    jwt:
+      secret: ${JWT_SECRET:YourSuperSecretJWTKeyForProductionUse2024!}
+      expiration: ${JWT_EXPIRATION:86400000}
+      refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
+      issuer: smartshoe-api
+      audience: smartshoe-users
+    
+    cors:
+      allowed-origins:
+        - https://app.smartshoe.com
+        - https://dashboard.smartshoe.com
+      allowed-methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+        - PATCH
+      allowed-headers:
+        - Authorization
+        - Content-Type
+        - X-Requested-With
+        - Accept
+        - Origin
+        - Cache-Control
+        - X-File-Name
+      expose-headers:
+        - Authorization
+        - X-Total-Count
+      allow-credentials: true
+      max-age: 3600
+    
+    rate-limiting:
+      enabled: true
+      default-limit: 1000
+      window-seconds: 3600
+      login-limit: 10
+      login-window-seconds: 900
+      
+    password-policy:
+      min-length: 12
+      require-uppercase: true
+      require-lowercase: true
+      require-digits: true
+      require-special-chars: true
+      max-age-days: 90
+  
+  # ================================================================
+  # MEDICAL DATA CONFIGURATION
+  # ================================================================
+  medical:
+    data:
+      encryption-enabled: true
+      audit-enabled: true
+      retention-days: 2555
+      anonymization-enabled: true
+      backup-enabled: true
+      
+    compliance:
+      hipaa-enabled: true
+      gdpr-enabled: true
+      audit-trail-enabled: true
+      data-minimization-enabled: true
+      consent-management-enabled: true
+  
+  # ================================================================
+  # DEVICE CONFIGURATION
+  # ================================================================
+  device:
+    data:
+      batch-size: 1000
+      validation-enabled: true
+      compression-enabled: true
+      encryption-enabled: true
+      
+    monitoring:
+      health-check-interval: 300000
+      alert-threshold: 3
+      auto-calibration-enabled: true
+      heartbeat-timeout: 60000
+  
+  # ================================================================
+  # NOTIFICATION CONFIGURATION
+  # ================================================================
+  notifications:
+    enabled: true
+    email:
+      enabled: ${EMAIL_ENABLED:false}
+      from: ${EMAIL_FROM:noreply@smartshoe.com}
+      smtp:
+        host: ${SMTP_HOST:smtp.gmail.com}
+        port: ${SMTP_PORT:587}
+        username: ${SMTP_USERNAME:}
+        password: ${SMTP_PASSWORD:}
+        auth: true
+        starttls: true
+    
+    sms:
+      enabled: ${SMS_ENABLED:false}
+      provider: ${SMS_PROVIDER:twilio}
+      account-sid: ${TWILIO_ACCOUNT_SID:}
+      auth-token: ${TWILIO_AUTH_TOKEN:}
+      from-number: ${TWILIO_FROM_NUMBER:}
+  
+  # ================================================================
+  # PERFORMANCE CONFIGURATION
+  # ================================================================
+  performance:
+    async:
+      core-pool-size: 10
+      max-pool-size: 50
+      queue-capacity: 1000
+      thread-name-prefix: SmartShoe-Async-
+    
+    connection-pool:
+      max-total: 200
+      default-max-per-route: 50
+      connection-timeout: 5000
+      socket-timeout: 10000
+      connection-request-timeout: 3000
+  
+  # ================================================================
+  # BACKUP CONFIGURATION
+  # ================================================================
+  backup:
+    enabled: true
+    schedule: "0 2 * * *"
+    retention-days: 30
+    compression-enabled: true
+    encryption-enabled: true
+    storage-type: local
+    storage-path: /app/data/backups

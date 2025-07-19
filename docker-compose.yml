@@ -1,0 +1,353 @@
+# Production Docker Compose for Diabetic Smart Shoe Platform
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: smartshoe-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-smartshoe}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    networks:
+      - smartshoe-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-smartshoe}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: smartshoe-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - smartshoe-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # MongoDB for ML Model Storage
+  mongodb:
+    image: mongo:6.0
+    container_name: smartshoe-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-admin_password}
+      MONGO_INITDB_DATABASE: ${MONGO_DB:-smartshoe_ml}
+    volumes:
+      - mongodb_data:/data/db
+      - ./database/mongo-init:/docker-entrypoint-initdb.d
+    ports:
+      - "27017:27017"
+    networks:
+      - smartshoe-network
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Spring Boot Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        JAR_FILE: target/*.jar
+    container_name: smartshoe-backend
+    environment:
+      # Database Configuration
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-smartshoe}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      
+      # Redis Configuration
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD:-redis_password}
+      
+      # ML API Configuration
+      ML_API_BASE_URL: http://ml-api:8000
+      
+      # JWT Configuration
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-here}
+      JWT_EXPIRATION: 86400000
+      
+      # Email Configuration
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      
+      # Environment
+      SPRING_PROFILES_ACTIVE: production
+      JAVA_OPTS: -Xmx2g -Xms1g -XX:+UseG1GC
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mongodb:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    networks:
+      - smartshoe-network
+    volumes:
+      - backend_logs:/app/logs
+      - backend_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    restart: unless-stopped
+
+  # Python ML API
+  ml-api:
+    build:
+      context: ./ml-models
+      dockerfile: Dockerfile
+    container_name: smartshoe-ml-api
+    environment:
+      # Database Configuration
+      MONGODB_URL: mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-admin_password}@mongodb:27017/${MONGO_DB:-smartshoe_ml}?authSource=admin
+      REDIS_URL: redis://:${REDIS_PASSWORD:-redis_password}@redis:6379
+      
+      # ML Configuration
+      MODEL_PATH: /app/trained-models
+      MLFLOW_TRACKING_URI: file:///app/experiments/mlruns
+      
+      # API Configuration
+      API_PORT: 8000
+      API_HOST: 0.0.0.0
+      WORKERS: 4
+      
+      # Security
+      API_KEY: ${ML_API_KEY:-your-ml-api-key-here}
+      
+      # Environment
+      ENVIRONMENT: production
+      PYTHON_ENV: production
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    networks:
+      - smartshoe-network
+    volumes:
+      - ml_models:/app/trained-models
+      - ml_experiments:/app/experiments
+      - ml_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_API_URL: http://localhost:8080/api
+        REACT_APP_ML_API_URL: http://localhost:8000
+        REACT_APP_WS_URL: ws://localhost:8080
+        REACT_APP_VERSION: 1.0.0
+        REACT_APP_BUILD_TIME: ${BUILD_TIME}
+        REACT_APP_COMMIT_HASH: ${COMMIT_HASH}
+    container_name: smartshoe-frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+      ml-api:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    networks:
+      - smartshoe-network
+    volumes:
+      - frontend_logs:/var/log/nginx
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  # Nginx Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: smartshoe-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/sites-enabled:/etc/nginx/sites-enabled
+      - ./nginx/ssl:/etc/nginx/ssl
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - frontend
+      - backend
+      - ml-api
+    networks:
+      - smartshoe-network
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: smartshoe-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - smartshoe-network
+    restart: unless-stopped
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: smartshoe-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+    networks:
+      - smartshoe-network
+    restart: unless-stopped
+
+  # ElasticSearch for Logging
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    container_name: smartshoe-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - smartshoe-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Kibana for Log Visualization
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.8.0
+    container_name: smartshoe-kibana
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - smartshoe-network
+    restart: unless-stopped
+
+  # Logstash for Log Processing
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.8.0
+    container_name: smartshoe-logstash
+    volumes:
+      - ./logging/logstash.conf:/usr/share/logstash/pipeline/logstash.conf
+      - backend_logs:/app/logs/backend
+      - ml_logs:/app/logs/ml
+      - frontend_logs:/app/logs/frontend
+      - nginx_logs:/app/logs/nginx
+    depends_on:
+      - elasticsearch
+    networks:
+      - smartshoe-network
+    restart: unless-stopped
+
+networks:
+  smartshoe-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  mongodb_data:
+    driver: local
+  backend_logs:
+    driver: local
+  backend_data:
+    driver: local
+  ml_models:
+    driver: local
+  ml_experiments:
+    driver: local
+  ml_logs:
+    driver: local
+  frontend_logs:
+    driver: local
+  nginx_logs:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+  elasticsearch_data:
+    driver: local

@@ -1,0 +1,20 @@
+{
+    "best_parameters": {
+        "risk_predictor": {
+            "n_estimators": 124,
+            "max_depth": 3,
+            "learning_rate": 0.09630771440694742,
+            "subsample": 0.8861302024909835
+        },
+        "progression_tracker": {
+            "n_estimators": 179,
+            "max_depth": 8,
+            "min_samples_leaf": 7,
+            "learning_rate": 0.248014939685054
+        }
+    },
+    "best_scores": {
+        "risk_predictor": 0.4575654253154253,
+        "progression_tracker": -0.00036822224275473594
+    }
+}

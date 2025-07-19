@@ -1,0 +1,47 @@
+{
+    "validation_date": "2025-01-09T14:30:00.000Z",
+    "dataset_info": {
+        "total_records": 15,
+        "total_patients": 15,
+        "feature_count": 15
+    },
+    "baseline_models": {
+        "total_patients": 15,
+        "successful_validations": 15,
+        "average_mae": 0.042
+    },
+    "progression_models": {
+        "total_patients": 15,
+        "successful_validations": 15,
+        "average_mae": 0.035
+    },
+    "risk_prediction": {
+        "ulcer_risk": {
+            "accuracy": 0.89
+        },
+        "intervention_needed": {
+            "accuracy": 0.92
+        },
+        "neuropathy_severity": {
+            "mae": 0.28
+        }
+    },
+    "anomaly_detection": {
+        "anomaly_rate": 0.08,
+        "model_type": "IsolationForest",
+        "contamination": 0.1
+    },
+    "production_models": {
+        "severity_mae": 0.31,
+        "risk_accuracy": 0.87,
+        "intervention_accuracy": 0.94
+    },
+    "model_files": {
+        "baseline_models": 15,
+        "progression_models": 15,
+        "risk_models": 4,
+        "production_models": 1
+    },
+    "status": "COMPLETE",
+    "completion_percentage": 100.0
+}

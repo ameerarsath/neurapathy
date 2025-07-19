@@ -1,0 +1,62 @@
+# Git
+.git
+.gitignore
+
+# Maven
+target/
+.mvn/
+mvnw
+mvnw.cmd
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation
+*.md
+README.md
+CLAUDE.md
+AUTHENTICATION_GUIDE.md
+
+# Docker files
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Build scripts
+*.bat
+*.sh
+*.ps1
+
+# Development files
+.env*
+application-dev.yml
+application-test.yml
+application-local.yml
+
+# Test files
+src/test/
+
+# Python scripts
+*.py
+__pycache__/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Medical data (security)
+patient-data/
+medical-records/
+sensitive/

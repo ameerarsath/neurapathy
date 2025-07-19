@@ -1,0 +1,13 @@
+{
+  "patient_id": "P001",
+  "timestamp": "2024-01-01T00:00:00",
+  "measurements": {
+    "pinprick_threshold": 10.5,
+    "temp_hot_threshold": 45.2,
+    "temp_cold_threshold": 15.1,
+    "vibration_threshold": 25.3
+  },
+  "context": {
+    "last_examination": "2023-12-01"
+  }
+}

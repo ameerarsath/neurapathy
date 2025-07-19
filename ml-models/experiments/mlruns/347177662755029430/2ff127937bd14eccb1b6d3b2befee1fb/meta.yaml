@@ -1,0 +1,15 @@
+artifact_uri: file:D:\biotech\project\ml-models\experiments\mlruns/347177662755029430/2ff127937bd14eccb1b6d3b2befee1fb/artifacts
+end_time: 1749214412386
+entry_point_name: ''
+experiment_id: '347177662755029430'
+lifecycle_stage: active
+run_id: 2ff127937bd14eccb1b6d3b2befee1fb
+run_name: training_run
+run_uuid: 2ff127937bd14eccb1b6d3b2befee1fb
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1749214412275
+status: 4
+tags: []
+user_id: moham

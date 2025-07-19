@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS & Authentication Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-gray-100 flex items-center justify-center">
+    <div class="max-w-lg w-full bg-white rounded-lg shadow-lg p-8">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">CORS & Auth Test</h1>
+        
+        <div class="space-y-4">
+            <button onclick="testPublicEndpoint()" 
+                    class="w-full px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                Test Public Endpoint (No Auth)
+            </button>
+            
+            <button onclick="testSecuredEndpoint()" 
+                    class="w-full px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                Test Secured Endpoint (With Auth)
+            </button>
+            
+            <button onclick="testInvalidAuth()" 
+                    class="w-full px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                Test Invalid Credentials
+            </button>
+        </div>
+        
+        <div id="results" class="mt-6 p-4 bg-gray-50 rounded-lg min-h-[200px] text-sm">
+            <p class="text-gray-600">Click a button above to test...</p>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const colorClass = type === 'success' ? 'text-green-600' : 
+                              type === 'error' ? 'text-red-600' : 
+                              type === 'warning' ? 'text-yellow-600' : 'text-gray-600';
+            
+            results.innerHTML += `<div class="${colorClass}">[${timestamp}] ${message}</div>`;
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function testPublicEndpoint() {
+            clearResults();
+            log('Testing public endpoint (no CORS issues expected)...', 'info');
+            
+            try {
+                const response = await fetch('http://localhost:8080/api/credentials');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log('✅ Public endpoint works!', 'success');
+                    log('✅ CORS is properly configured', 'success');
+                    log(`Found ${Object.keys(data.users).length} demo users`, 'info');
+                } else {
+                    log(`❌ Unexpected response: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                if (error.message.includes('CORS')) {
+                    log('❌ CORS error - backend CORS not configured', 'error');
+                } else {
+                    log(`❌ Connection error: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function testSecuredEndpoint() {
+            clearResults();
+            log('Testing secured endpoint with valid credentials...', 'info');
+            
+            try {
+                const token = btoa('admin:admin123');
+                const response = await fetch('http://localhost:8080/api/patients', {
+                    headers: {
+                        'Authorization': `Basic ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    log('✅ Authentication successful!', 'success');
+                    log('✅ CORS working for authenticated requests', 'success');
+                    const data = await response.json();
+                    log(`Received ${Array.isArray(data) ? data.length : 'unknown'} patients`, 'info');
+                } else if (response.status === 401) {
+                    log('❌ Authentication failed - check credentials', 'error');
+                } else {
+                    log(`❌ Unexpected response: ${response.status}`, 'error');
+                }
+            } catch (error) {
+                if (error.message.includes('CORS')) {
+                    log('❌ CORS error on authenticated request', 'error');
+                } else {
+                    log(`❌ Connection error: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        async function testInvalidAuth() {
+            clearResults();
+            log('Testing with invalid credentials (should get 401)...', 'info');
+            
+            try {
+                const token = btoa('invalid:invalid');
+                const response = await fetch('http://localhost:8080/api/patients', {
+                    headers: {
+                        'Authorization': `Basic ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.status === 401) {
+                    log('✅ Correct 401 response for invalid credentials', 'success');
+                    log('✅ Security working properly', 'success');
+                } else {
+                    log(`⚠️ Unexpected response: ${response.status}`, 'warning');
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

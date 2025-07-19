@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Smart Shoe</string>
+    <string name="title_activity_main">Smart Shoe</string>
+    <string name="package_name">com.smartshoe.app</string>
+    <string name="custom_url_scheme">com.smartshoe.app</string>
+</resources>

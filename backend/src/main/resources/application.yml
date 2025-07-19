@@ -1,0 +1,65 @@
+# SMART SHOE API CONFIGURATION
+spring:
+  application:
+    name: smartshoe-api
+  
+  datasource:
+    url: jdbc:h2:file:./data/smartshoe;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+  
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.smartshoe: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# ML SERVICE CONFIGURATION
+ml:
+  api:
+    base-url: http://localhost:8000
+    token: ml_api_dev_token
+    timeout: 30000
+    enabled: true
+    models:
+      neuropathy-progression:
+        enabled: true
+        accuracy-threshold: 0.85
+      glucose-complications:
+        enabled: true
+        accuracy-threshold: 0.80
+      anomaly-detection:
+        enabled: true
+        accuracy-threshold: 0.90
+      risk-stratification:
+        enabled: true
+        accuracy-threshold: 0.85
