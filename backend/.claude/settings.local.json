@@ -63,7 +63,8 @@
       "Bash(true)",
       "Bash(npx cap init:*)",
       "Bash(npm run build:*)",
-      "Bash(./cleanup-db.sh:*)"
+      "Bash(./cleanup-db.sh:*)",
+      "Bash(./quick-build.sh:*)"
     ],
     "deny": []
   }

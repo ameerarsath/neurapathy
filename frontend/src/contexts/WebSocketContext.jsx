@@ -58,12 +58,11 @@ export const WebSocketProvider = ({ children }) => {
   const initializeSocket = useCallback(() => {
     if (!user || !token) return
 
-    // Skip WebSocket connection if explicitly disabled or in development
-    const disableWebSocket = localStorage.getItem('disableWebSocket') === 'true' ||
-                             import.meta.env.DEV === true
+    // Temporarily disable WebSocket until backend is deployed with WebSocket support
+    const disableWebSocket = true // Force disable for now
     
     if (disableWebSocket) {
-      console.log('WebSocket disabled (dev mode or user setting)')
+      console.log('WebSocket temporarily disabled - backend deployment required')
       setConnectionStatus('disabled')
       return
     }
