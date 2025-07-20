@@ -1,4 +1,4 @@
-package com.smartshoe.config;
+package com.smartshoe.api.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

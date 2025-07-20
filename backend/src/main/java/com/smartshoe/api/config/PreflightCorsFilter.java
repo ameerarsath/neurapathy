@@ -1,4 +1,4 @@
-package com.smartshoe.config;
+package com.smartshoe.api.config;
 
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
