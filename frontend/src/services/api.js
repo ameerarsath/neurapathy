@@ -4,7 +4,7 @@ import { toast } from 'react-hot-toast'
 // API Configuration
 const API_CONFIG = {
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
-  mlBaseURL: import.meta.env.VITE_ML_API_BASE_URL || 'http://localhost:8000',
+  mlBaseURL: import.meta.env.VITE_ML_API_BASE_URL || 'http://localhost:8080/api/ml',
   timeout: 30000,
   retryAttempts: 3,
   retryDelay: 1000

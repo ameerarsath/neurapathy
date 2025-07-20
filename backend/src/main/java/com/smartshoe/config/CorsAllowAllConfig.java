@@ -16,7 +16,8 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * 
  * WARNING: This is for development/testing only. Not recommended for production.
  */
-@Configuration
+// @Configuration - DISABLED to avoid conflicts with CorsConfig
+// Uncomment this line and comment out CorsConfig to enable complete CORS bypass
 public class CorsAllowAllConfig implements WebMvcConfigurer {
 
     /**
@@ -34,9 +35,10 @@ public class CorsAllowAllConfig implements WebMvcConfigurer {
 
     /**
      * Bean-based CORS configuration - Allow everything
+     * DISABLED - Uncomment @Bean to enable
      */
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
+    // @Bean
+    public CorsConfigurationSource corsConfigurationSourceDisabled() {
         CorsConfiguration configuration = new CorsConfiguration();
         
         // Allow ALL origins
