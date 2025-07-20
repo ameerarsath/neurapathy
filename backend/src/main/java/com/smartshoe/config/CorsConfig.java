@@ -29,27 +29,7 @@ public class CorsConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-                .allowedOriginPatterns("*") // Allow all origins in development
-                .allowedOrigins(
-                    // Production origins
-                    "http://13.201.120.175",
-                    "http://13.201.120.175:3000",
-                    "https://13.201.120.175",
-                    "https://13.201.120.175:3000",
-                    
-                    // Development origins
-                    "http://localhost:3000",
-                    "http://localhost:5173",
-                    "http://localhost:8080",
-                    "http://127.0.0.1:3000",
-                    "http://127.0.0.1:5173",
-                    
-                    // Mobile app origins (for Capacitor)
-                    "capacitor://localhost",
-                    "ionic://localhost",
-                    "http://localhost",
-                    "https://localhost"
-                )
+                .allowedOriginPatterns("*") // Allow ALL origins - no restrictions
                 .allowedMethods(
                     "GET", 
                     "POST", 
@@ -78,7 +58,7 @@ public class CorsConfig implements WebMvcConfigurer {
                     "Authorization",
                     "Content-Disposition"
                 )
-                .allowCredentials(true)
+                .allowCredentials(false) // Disabled when allowing all origins
                 .maxAge(3600); // Cache preflight response for 1 hour
     }
 
@@ -91,28 +71,9 @@ public class CorsConfig implements WebMvcConfigurer {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         
-        // Production and development origins
-        configuration.setAllowedOrigins(Arrays.asList(
-            // Production origins
-            "http://13.201.120.175",
-            "http://13.201.120.175:3000",
-            "https://13.201.120.175",
-            "https://13.201.120.175:3000",
-            
-            // Development origins
-            "http://localhost:3000",
-            "http://localhost:5173",
-            "http://localhost:8080",
-            "http://127.0.0.1:3000",
-            "http://127.0.0.1:5173"
-        ));
-        
-        // Mobile app origins (Capacitor)
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-            "capacitor://*",
-            "ionic://*",
-            "file://*"
-        ));
+        // Allow ALL origins - no restrictions
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+        configuration.setAllowCredentials(false); // Must be false when using "*"
         
         // Allowed HTTP methods
         configuration.setAllowedMethods(Arrays.asList(
@@ -132,8 +93,8 @@ public class CorsConfig implements WebMvcConfigurer {
             "Access-Control-Allow-Credentials"
         ));
         
-        // Allow credentials (cookies, authorization headers)
-        configuration.setAllowCredentials(true);
+        // Credentials disabled when allowing all origins
+        configuration.setAllowCredentials(false);
         
         // Cache preflight response for 1 hour
         configuration.setMaxAge(3600L);
