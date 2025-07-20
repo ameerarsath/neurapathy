@@ -82,9 +82,13 @@ mvn spring-boot:run
 - No file system conflicts
 - Faster test execution
 
-### Database URLs
-- **Production**: `jdbc:h2:file:./data/smartshoe;AUTO_SERVER=TRUE`
-- **Test**: `jdbc:h2:mem:testdb`
+### Database URLs (UPDATED)
+- **Production**: `jdbc:h2:file:./data/smartshoe;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE;AUTO_SERVER_PORT=9090`
+- **Test**: `jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1`
+
+### Configuration Fix
+- **REMOVED**: `DB_CLOSE_ON_EXIT=FALSE` (incompatible with AUTO_SERVER)
+- **ADDED**: `AUTO_SERVER_PORT=9090` for explicit port control
 
 ## Verification
 
