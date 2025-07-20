@@ -74,7 +74,9 @@ public class WebSecurityConfig {
                     "/h2-console/**",
                     "/swagger-ui/**",
                     "/v3/api-docs/**",
-                    "/api/ml/**"
+                    "/api/ml/**",
+                    "/ws/**",
+                    "/websocket/**"
                 ).permitAll()
                 
                 // Public API endpoints for easy testing

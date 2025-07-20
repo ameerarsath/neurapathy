@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test - Smart Shoe</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            max-width: 900px; 
+            margin: 0 auto;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; text-align: center; margin-bottom: 30px; }
+        .status { 
+            padding: 15px; 
+            margin: 15px 0; 
+            border-radius: 8px; 
+            font-weight: bold;
+            text-align: center;
+        }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+        .connecting { background: #d1ecf1; color: #0c5460; }
+        .message { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 5px; 
+            border-left: 4px solid #007bff;
+            background: #f8f9fa;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        button { 
+            padding: 10px 20px; 
+            margin: 5px; 
+            background: #007bff; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        #messages {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            background: #fff;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 5px;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 WebSocket Connection Test</h1>
+        
+        <div id="status" class="status disconnected">
+            Disconnected
+        </div>
+        
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value" id="messageCount">0</div>
+                <div class="stat-label">Messages Received</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="latency">-</div>
+                <div class="stat-label">Latency (ms)</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="uptime">00:00</div>
+                <div class="stat-label">Connection Time</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button onclick="connect()">Connect</button>
+            <button onclick="disconnect()">Disconnect</button>
+            <button onclick="sendPing()">Send Ping</button>
+            <button onclick="testDeviceAlert()">Test Device Alert</button>
+            <button onclick="testMedicalAlert()">Test Medical Alert</button>
+            <button onclick="clearMessages()">Clear Messages</button>
+        </div>
+        
+        <h3>Messages:</h3>
+        <div id="messages"></div>
+    </div>
+    
+    <script>
+        let ws = null;
+        let messageCount = 0;
+        let connectionStartTime = null;
+        let uptimeInterval = null;
+        
+        // WebSocket URL - update this to match your server
+        const WS_URL = 'ws://localhost:8080/ws';
+        
+        function updateStatus(status, message) {
+            const statusEl = document.getElementById('status');
+            statusEl.className = 'status ' + status;
+            statusEl.textContent = message;
+        }
+        
+        function addMessage(type, data) {
+            const messagesEl = document.getElementById('messages');
+            const messageEl = document.createElement('div');
+            messageEl.className = 'message';
+            
+            const timestamp = new Date().toLocaleTimeString();
+            messageEl.innerHTML = `<strong>[${timestamp}] ${type}:</strong><br>${JSON.stringify(data, null, 2)}`;
+            
+            messagesEl.appendChild(messageEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+            
+            messageCount++;
+            document.getElementById('messageCount').textContent = messageCount;
+        }
+        
+        function updateLatency(latency) {
+            document.getElementById('latency').textContent = latency + 'ms';
+        }
+        
+        function startUptimeTimer() {
+            connectionStartTime = Date.now();
+            uptimeInterval = setInterval(() => {
+                if (connectionStartTime) {
+                    const uptime = Date.now() - connectionStartTime;
+                    const minutes = Math.floor(uptime / 60000);
+                    const seconds = Math.floor((uptime % 60000) / 1000);
+                    document.getElementById('uptime').textContent = 
+                        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+        
+        function stopUptimeTimer() {
+            if (uptimeInterval) {
+                clearInterval(uptimeInterval);
+                uptimeInterval = null;
+            }
+            connectionStartTime = null;
+            document.getElementById('uptime').textContent = '00:00';
+        }
+        
+        function connect() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                addMessage('INFO', 'Already connected');
+                return;
+            }
+            
+            updateStatus('connecting', 'Connecting...');
+            addMessage('INFO', 'Attempting to connect to ' + WS_URL);
+            
+            ws = new WebSocket(WS_URL);
+            
+            ws.onopen = () => {
+                updateStatus('connected', 'Connected');
+                addMessage('SUCCESS', 'WebSocket connected successfully');
+                startUptimeTimer();
+            };
+            
+            ws.onmessage = (event) => {
+                try {
+                    const message = JSON.parse(event.data);
+                    addMessage('RECEIVED', message);
+                    
+                    // Handle pong messages for latency
+                    if (message.type === 'pong' && message.originalTimestamp) {
+                        const latency = Date.now() - new Date(message.originalTimestamp).getTime();
+                        updateLatency(latency);
+                    }
+                } catch (e) {
+                    addMessage('RECEIVED (Raw)', event.data);
+                }
+            };
+            
+            ws.onclose = (event) => {
+                updateStatus('disconnected', 'Disconnected');
+                addMessage('INFO', `Connection closed: Code ${event.code}, Reason: ${event.reason}`);
+                stopUptimeTimer();
+            };
+            
+            ws.onerror = (error) => {
+                updateStatus('disconnected', 'Connection Error');
+                addMessage('ERROR', 'WebSocket error occurred');
+                console.error('WebSocket error:', error);
+            };
+        }
+        
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+        
+        function sendMessage(message) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(message));
+                addMessage('SENT', message);
+                return true;
+            } else {
+                addMessage('ERROR', 'WebSocket not connected');
+                return false;
+            }
+        }
+        
+        function sendPing() {
+            sendMessage({
+                type: 'ping',
+                timestamp: new Date().toISOString()
+            });
+        }
+        
+        function testDeviceAlert() {
+            // Use REST API to trigger device alert broadcast
+            fetch('http://localhost:8080/api/websocket/broadcast/device-alert', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    deviceId: 'SH-TEST-001',
+                    alertType: 'BATTERY_LOW',
+                    message: 'Test device alert from WebSocket test page'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                addMessage('API CALL', 'Device alert broadcast triggered: ' + JSON.stringify(data));
+            })
+            .catch(error => {
+                addMessage('ERROR', 'Failed to trigger device alert: ' + error.message);
+            });
+        }
+        
+        function testMedicalAlert() {
+            // Use REST API to trigger medical alert broadcast
+            fetch('http://localhost:8080/api/websocket/broadcast/medical-alert', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    patientId: 'PAT-TEST-001',
+                    alertType: 'THRESHOLD_EXCEEDED',
+                    message: 'Test medical alert from WebSocket test page'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                addMessage('API CALL', 'Medical alert broadcast triggered: ' + JSON.stringify(data));
+            })
+            .catch(error => {
+                addMessage('ERROR', 'Failed to trigger medical alert: ' + error.message);
+            });
+        }
+        
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+            messageCount = 0;
+            document.getElementById('messageCount').textContent = '0';
+        }
+        
+        // Auto-connect on page load
+        window.onload = function() {
+            addMessage('INFO', 'WebSocket Test Page Loaded');
+            setTimeout(connect, 1000);
+        };
+    </script>
+</body>
+</html>

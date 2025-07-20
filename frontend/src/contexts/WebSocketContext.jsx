@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
-import { io } from 'socket.io-client'
 import { useNotifications } from './NotificationContext'
 import { useAuth } from './AuthContext'
 
@@ -69,24 +68,12 @@ export const WebSocketProvider = ({ children }) => {
       return
     }
 
-    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8080'
+    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8080/ws'
     
-    const newSocket = io(wsUrl, {
-      auth: {
-        token: token
-      },
-      transports: ['websocket'],
-      upgrade: false,
-      autoConnect: true,
-      reconnection: true,
-      reconnectionAttempts: maxReconnectAttempts,
-      reconnectionDelay: reconnectDelay,
-      timeout: 10000,
-      forceNew: true
-    })
+    const newSocket = new WebSocket(wsUrl)
 
     // Connection event handlers
-    newSocket.on('connect', () => {
+    newSocket.onopen = () => {
       console.log('WebSocket connected')
       setConnectionStatus('connected')
       setReconnectAttempts(0)
@@ -102,21 +89,23 @@ export const WebSocketProvider = ({ children }) => {
         showInfo('Real-time connection established')
         setHasShownConnectionSuccess(true)
       }
-    })
+    }
 
-    newSocket.on('disconnect', (reason) => {
-      console.log('WebSocket disconnected:', reason)
+    newSocket.onclose = (event) => {
+      console.log('WebSocket disconnected:', event.code, event.reason)
       setConnectionStatus('disconnected')
       
-      if (reason === 'io server disconnect') {
-        // Server disconnected the client, reconnect manually
+      // Attempt to reconnect after a delay
+      if (reconnectAttempts < maxReconnectAttempts) {
         setTimeout(() => {
-          newSocket.connect()
-        }, reconnectDelay)
+          setReconnectAttempts(prev => prev + 1)
+          const reconnectSocket = initializeSocket()
+          setSocket(reconnectSocket)
+        }, reconnectDelay * (reconnectAttempts + 1))
       }
-    })
+    }
 
-    newSocket.on('connect_error', (error) => {
+    newSocket.onerror = (error) => {
       console.error('WebSocket connection error:', error)
       setConnectionStatus('error')
       setReconnectAttempts(prev => prev + 1)
@@ -125,118 +114,62 @@ export const WebSocketProvider = ({ children }) => {
         showSystemAlert('Unable to establish real-time connection. Features may be limited.')
         setHasShownConnectionError(true)
       }
-    })
+    }
 
-    newSocket.on('reconnect', (attemptNumber) => {
-      console.log(`WebSocket reconnected after ${attemptNumber} attempts`)
-      setConnectionStatus('connected')
-      setReconnectAttempts(0)
-      setHasShownConnectionError(false)
-      showInfo('Connection restored')
-    })
-
-    newSocket.on('reconnect_attempt', (attemptNumber) => {
-      console.log(`WebSocket reconnection attempt ${attemptNumber}`)
-      setConnectionStatus('reconnecting')
-    })
-
-    newSocket.on('reconnect_error', (error) => {
-      console.error('WebSocket reconnection error:', error)
-      setConnectionStatus('error')
-    })
-
-    newSocket.on('reconnect_failed', () => {
-      console.error('WebSocket reconnection failed')
-      setConnectionStatus('failed')
-      if (!hasShownConnectionError) {
-        showSystemAlert('Connection failed. Please refresh the page.')
-        setHasShownConnectionError(true)
+    // Message handler for all incoming WebSocket messages
+    newSocket.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data)
+        console.log('WebSocket message received:', message)
+        
+        // Handle different message types
+        switch (message.type) {
+          case 'welcome':
+            console.log('Welcome message received:', message)
+            break
+          case 'pong':
+            handlePongMessage(message)
+            break
+          case 'medical_alert':
+            handleMedicalAlert(message.data || message)
+            break
+          case 'device_alert':
+            handleDeviceAlert(message.data || message)
+            break
+          case 'system_alert':
+            handleSystemAlert(message.data || message)
+            break
+          case 'device_data':
+            handleDeviceData(message.data || message)
+            break
+          case 'test_result':
+            handleTestResult(message.data || message)
+            break
+          case 'ml_prediction':
+            handleMLPrediction(message.data || message)
+            break
+          default:
+            console.log('Unknown message type:', message.type)
+        }
+        
+        // Update last message and history
+        setLastMessage({ type: message.type, data: message, timestamp: Date.now() })
+        setMessageHistory(prev => [...prev.slice(-99), { type: message.type, data: message, timestamp: Date.now() }])
+        
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error)
       }
-    })
+    }
 
-    // Pong handler for latency measurement
-    newSocket.on('pong', (timestamp) => {
-      const now = Date.now()
-      setLatency(now - timestamp)
-    })
+    // Handle pong messages for latency measurement  
+    const handlePongMessage = (message) => {
+      if (message.originalTimestamp) {
+        const now = Date.now()
+        const originalTime = new Date(message.originalTimestamp).getTime()
+        setLatency(now - originalTime)
+      }
+    }
 
-    // Medical alert handler
-    newSocket.on(WS_EVENTS.MEDICAL_ALERT, (data) => {
-      console.log('Medical alert received:', data)
-      handleMedicalAlert(data)
-    })
-
-    // Device alert handler
-    newSocket.on(WS_EVENTS.DEVICE_ALERT, (data) => {
-      console.log('Device alert received:', data)
-      handleDeviceAlert(data)
-    })
-
-    // System alert handler
-    newSocket.on(WS_EVENTS.SYSTEM_ALERT, (data) => {
-      console.log('System alert received:', data)
-      handleSystemAlert(data)
-    })
-
-    // Device data handler
-    newSocket.on(WS_EVENTS.DEVICE_DATA, (data) => {
-      console.log('Device data received:', data)
-      handleDeviceData(data)
-    })
-
-    // Test result handler
-    newSocket.on(WS_EVENTS.TEST_RESULT, (data) => {
-      console.log('Test result received:', data)
-      handleTestResult(data)
-    })
-
-    // ML prediction handler
-    newSocket.on(WS_EVENTS.ML_PREDICTION, (data) => {
-      console.log('ML prediction received:', data)
-      handleMLPrediction(data)
-    })
-
-    // Battery low handler
-    newSocket.on(WS_EVENTS.BATTERY_LOW, (data) => {
-      console.log('Battery low alert:', data)
-      handleBatteryLow(data)
-    })
-
-    // Device offline handler
-    newSocket.on(WS_EVENTS.DEVICE_OFFLINE, (data) => {
-      console.log('Device offline:', data)
-      handleDeviceOffline(data)
-    })
-
-    // Anomaly detected handler
-    newSocket.on(WS_EVENTS.ANOMALY_DETECTED, (data) => {
-      console.log('Anomaly detected:', data)
-      handleAnomalyDetected(data)
-    })
-
-    // Threshold exceeded handler
-    newSocket.on(WS_EVENTS.THRESHOLD_EXCEEDED, (data) => {
-      console.log('Threshold exceeded:', data)
-      handleThresholdExceeded(data)
-    })
-
-    // Calibration required handler
-    newSocket.on(WS_EVENTS.CALIBRATION_REQUIRED, (data) => {
-      console.log('Calibration required:', data)
-      handleCalibrationRequired(data)
-    })
-
-    // System maintenance handler
-    newSocket.on(WS_EVENTS.SYSTEM_MAINTENANCE, (data) => {
-      console.log('System maintenance:', data)
-      handleSystemMaintenance(data)
-    })
-
-    // User session update handler
-    newSocket.on(WS_EVENTS.USER_SESSION_UPDATE, (data) => {
-      console.log('User session update:', data)
-      handleUserSessionUpdate(data)
-    })
 
     setSocket(newSocket)
     return newSocket
@@ -249,8 +182,11 @@ export const WebSocketProvider = ({ children }) => {
     }
 
     pingTimer.current = setInterval(() => {
-      if (socket.connected) {
-        socket.emit('ping', Date.now())
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+          type: 'ping',
+          timestamp: new Date().toISOString()
+        }))
       }
     }, 30000) // Ping every 30 seconds
   }, [])
@@ -277,8 +213,13 @@ export const WebSocketProvider = ({ children }) => {
     }
 
     userChannels.forEach(channel => {
-      socket.emit('subscribe', channel)
-      setSubscribedChannels(prev => new Set([...prev, channel]))
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+          type: 'subscribe',
+          channel: channel
+        }))
+        setSubscribedChannels(prev => new Set([...prev, channel]))
+      }
     })
   }, [user])
 
@@ -401,8 +342,8 @@ export const WebSocketProvider = ({ children }) => {
       const newSocket = initializeSocket()
       
       return () => {
-        if (newSocket) {
-          newSocket.disconnect()
+        if (newSocket && newSocket.readyState === WebSocket.OPEN) {
+          newSocket.close()
         }
         if (pingTimer.current) {
           clearInterval(pingTimer.current)
@@ -417,8 +358,8 @@ export const WebSocketProvider = ({ children }) => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (socket) {
-        socket.disconnect()
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.close()
       }
       if (pingTimer.current) {
         clearInterval(pingTimer.current)
@@ -431,15 +372,21 @@ export const WebSocketProvider = ({ children }) => {
 
   // Public methods
   const subscribe = useCallback((channel) => {
-    if (socket && socket.connected) {
-      socket.emit('subscribe', channel)
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({
+        type: 'subscribe',
+        channel: channel
+      }))
       setSubscribedChannels(prev => new Set([...prev, channel]))
     }
   }, [socket])
 
   const unsubscribe = useCallback((channel) => {
-    if (socket && socket.connected) {
-      socket.emit('unsubscribe', channel)
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({
+        type: 'unsubscribe',
+        channel: channel
+      }))
       setSubscribedChannels(prev => {
         const newSet = new Set(prev)
         newSet.delete(channel)
@@ -448,16 +395,20 @@ export const WebSocketProvider = ({ children }) => {
     }
   }, [socket])
 
-  const sendMessage = useCallback((event, data) => {
-    if (socket && socket.connected) {
-      socket.emit(event, data)
+  const sendMessage = useCallback((type, data) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({
+        type: type,
+        data: data,
+        timestamp: new Date().toISOString()
+      }))
     }
   }, [socket])
 
   const getConnectionStatus = useCallback(() => {
     return {
       status: connectionStatus,
-      connected: socket?.connected || false,
+      connected: socket?.readyState === WebSocket.OPEN || false,
       latency,
       reconnectAttempts
     }
