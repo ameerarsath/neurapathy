@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple WebSocket Connection Test</title>
+</head>
+<body>
+    <h1>WebSocket Connection Test</h1>
+    <div id="status">Disconnected</div>
+    <div id="messages"></div>
+    <button onclick="testConnection()">Test Connection</button>
+    
+    <script>
+        function addMessage(msg) {
+            document.getElementById('messages').innerHTML += '<div>' + new Date().toLocaleTimeString() + ': ' + msg + '</div>';
+        }
+        
+        function testConnection() {
+            addMessage('Attempting to connect to ws://13.201.120.175:8080/ws');
+            document.getElementById('status').textContent = 'Connecting...';
+            
+            const ws = new WebSocket('ws://13.201.120.175:8080/ws');
+            
+            ws.onopen = function() {
+                document.getElementById('status').textContent = 'Connected!';
+                addMessage('✅ WebSocket connected successfully!');
+                
+                // Send test message
+                ws.send(JSON.stringify({
+                    type: 'ping',
+                    timestamp: new Date().toISOString()
+                }));
+                addMessage('📤 Sent ping message');
+            };
+            
+            ws.onmessage = function(event) {
+                addMessage('📥 Received: ' + event.data);
+            };
+            
+            ws.onclose = function(event) {
+                document.getElementById('status').textContent = 'Disconnected';
+                addMessage('❌ Connection closed: Code ' + event.code + ', Reason: ' + event.reason);
+            };
+            
+            ws.onerror = function(error) {
+                document.getElementById('status').textContent = 'Error';
+                addMessage('💥 WebSocket error occurred');
+                console.error('WebSocket error:', error);
+            };
+        }
+        
+        // Auto-test on page load
+        window.onload = function() {
+            setTimeout(testConnection, 1000);
+        };
+    </script>
+</body>
+</html>

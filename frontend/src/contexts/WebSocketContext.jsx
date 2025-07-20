@@ -58,18 +58,19 @@ export const WebSocketProvider = ({ children }) => {
   const initializeSocket = useCallback(() => {
     if (!user || !token) return
 
-    // Skip WebSocket connection if not explicitly enabled
-    const enableWebSocket = import.meta.env.VITE_APP_ENVIRONMENT === 'production' || 
-                           localStorage.getItem('enableWebSocket') === 'true'
+    // Skip WebSocket connection if explicitly disabled or in development
+    const disableWebSocket = localStorage.getItem('disableWebSocket') === 'true' ||
+                             import.meta.env.DEV === true
     
-    if (!enableWebSocket) {
-      console.log('WebSocket disabled in development mode')
+    if (disableWebSocket) {
+      console.log('WebSocket disabled (dev mode or user setting)')
       setConnectionStatus('disabled')
       return
     }
 
-    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8080/ws'
+    const wsUrl = import.meta.env.VITE_WS_URL || 'ws://13.201.120.175:8080/ws'
     
+    console.log('🔌 Attempting WebSocket connection to:', wsUrl)
     const newSocket = new WebSocket(wsUrl)
 
     // Connection event handlers
@@ -95,13 +96,20 @@ export const WebSocketProvider = ({ children }) => {
       console.log('WebSocket disconnected:', event.code, event.reason)
       setConnectionStatus('disconnected')
       
-      // Attempt to reconnect after a delay
-      if (reconnectAttempts < maxReconnectAttempts) {
+      // Only attempt to reconnect if it was a normal close or network error
+      if (event.code !== 1006 && reconnectAttempts < maxReconnectAttempts) {
+        console.log(`🔄 Attempting reconnect ${reconnectAttempts + 1}/${maxReconnectAttempts} in ${reconnectDelay}ms`)
         setTimeout(() => {
           setReconnectAttempts(prev => prev + 1)
           const reconnectSocket = initializeSocket()
           setSocket(reconnectSocket)
         }, reconnectDelay * (reconnectAttempts + 1))
+      } else if (event.code === 1006) {
+        console.log('❌ WebSocket connection failed (code 1006) - not attempting reconnect')
+        if (!hasShownConnectionError) {
+          showSystemAlert('WebSocket connection failed. Real-time features disabled.')
+          setHasShownConnectionError(true)
+        }
       }
     }
 
